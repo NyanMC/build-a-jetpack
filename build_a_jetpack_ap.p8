@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 42
+version 43
 __lua__
 -- build a jetpack
 -- ◆ aymeri100.fr
@@ -103,6 +103,7 @@ function _draw()
 			col=7
 		end
 		to("press ❎ to start",32,80,col)
+		print("0.1.0",2,2,0)
 		print("1/100 aymeri100.fr",32,120,0)
 		return
 	end
@@ -132,6 +133,7 @@ function _update60()
 		u_raft()
 		return
 	end
+	update_items()
 	if btnp(🅾️) and not p.of and not gd.ending do
 		gd.paused = not gd.paused
 	end
@@ -1193,6 +1195,7 @@ function u_star()
 		if gd.ending do
 			return
 		end
+		check_location("victory")
 		gd.ending=true
 		p.cm=false
 		gd.totaltime=time()
@@ -1213,12 +1216,12 @@ hint="gain money with fishes",
 		{
 name="shop",
 icon=3,
-hint="buy new gears",
+hint="buy ap items",
 		},
 		{
 name="raft",
 icon=4,
-hint="upgrade your raft",
+hint="buy more ap items",
 		},
 		{
 name="credits",
@@ -1229,7 +1232,7 @@ icon=17,
 		{
 icon=5,
 name="diving suit",
-hint="+ prs. resistance",
+hint="archipelago item",
 lvl=0,
 max_lvl=8,
 price=9,
@@ -1238,7 +1241,7 @@ base_price=9,
 		{
 icon=6,
 name="o2 mask",
-hint="x2 max oxygen",
+hint="archipelago item",
 lvl=0,
 max_lvl=8,
 base_price=10,
@@ -1247,7 +1250,7 @@ price=10,
 		{
 name="backpack",
 icon=7,
-hint="+10 storage",
+hint="archipelago item",
 lvl=0,
 max_lvl=7,
 base_price=12,
@@ -1256,7 +1259,7 @@ price=12,
 		{
 name="fins",
 icon=8,
-hint="swim faster",
+hint="archipelago item",
 lvl=0,
 max_lvl=7,
 base_price=13,
@@ -1265,7 +1268,7 @@ price=13,
 		{
 name="magnet",
 icon=9,
-hint="bigger pickup rad.",
+hint="archipelago item",
 lvl=0,
 max_lvl=8,
 base_price=11,
@@ -1278,7 +1281,7 @@ name="expand",
 lvl=0,
 icon=11,
 max_lvl=3,
-hint="unlock new things",
+hint="archipelago item",
 costs={
 	{1,1,0,0},
 	{5,3,0,0},
@@ -1291,7 +1294,7 @@ lvl=0,
 icon=10,
 max_lvl=3,
 disabled=true,
-hint="to the moon!!",
+hint="archipelago item",
 costs={
 	{3,5, 0, 0},
 	{0,5, 10,0},
@@ -1304,7 +1307,7 @@ lvl=0,
 icon=12,
 max_lvl=5,
 disabled=true,
-hint="more fishes",
+hint="archipelago item",
 costs={
 	{3,0, 3, 0},
 	{0,0, 5,0},
@@ -1316,7 +1319,7 @@ costs={
 		{
 name="gold statue",
 disabled=true,
-hint="you're the king",
+hint="archipelago item",
 lvl=0,
 max_lvl=1,
 costs={
@@ -1328,6 +1331,11 @@ costs={
 		{
 			icon=18,
 			name="aymeri",
+		},
+		{
+			icon=21,
+			name="archipelago",
+			hint="impl by chromanyan",
 		},
 		{
 			icon=19,
@@ -1455,10 +1463,15 @@ end
 function _sell_all()
 	for obj in all(p.inv) do
 		local prc=_oi({id=obj},c.price)
+		local name=_oi({id=obj},c.name)
 		if prc>0 do
 			gd.money+=prc
 		else
 			r.storage[obj]+=1
+		end
+		
+		if locs[name] != nil then
+			check_location(name)
 		end
 		
 	end
@@ -1527,23 +1540,7 @@ function _mbtn_p()
 mbtn.base_price*2.2^(mbtn.lvl))
 ----------
 				end
-				if name=="diving suit" do
-					p.max_prs+=1
-				elseif name=="o2 mask" do
-					p.moxy*=2
-				elseif name=="backpack" do
-					if btnmax(mbtn) do
-						p.inv_s=9999
-					elseif mbtn.max_lvl-1==mbtn.lvl do
-						mbtn.hint="infinite inventory"
-					else
-						p.inv_s+=10
-					end
-				elseif name=="fins" do
-					p.swimspeed+=1
-				elseif name=="magnet" do
-					p.pr+=2
-				end
+				check_prog_loc(name)
 				sfx(sfxs.buy)
 			else
 				sfx(sfxs.error)
@@ -1578,27 +1575,7 @@ mbtn.base_price*2.2^(mbtn.lvl))
 		end
 		
 		mbtn.lvl+=1
-		if name=="expand" do
-			r.s+=1
-			menus[m.cm][2].disabled=mbtn.lvl<1
-			menus[m.cm][3].disabled=mbtn.lvl<2
-			menus[m.cm][4].disabled=mbtn.lvl<3
-			
-		elseif name=="radar" do
-			gd.mf+=1
-			r.b[name]+=1
-		elseif name=="jetpack" do
-			if p.jmpow==0 do
-				p.jmpow=100
-			else
-				p.jmpow*=2
-			end
-			r.b[name]+=1
-		elseif name=="gold statue" do
-			r.b["statue"]+=1
-		else
-			r.b[name]+=1
-		end
+		check_prog_loc(name)
 		sfx(sfxs.buy)
 		
 	end
@@ -1700,6 +1677,102 @@ function dist(x1,y1,x2,y2)
  local dy=y1-y2
  return sqrt(dx*dx+dy*dy)
 end
+-->8
+-- archipelago
+
+moneyindex = 0
+
+progressive_locs = {
+	["diving suit"]=0,
+	["o2 mask"]=1,
+	["backpack"]=2,
+	["fins"]=3,
+	["magnet"]=4,
+	["expand"]=5,
+	["jetpack"]=6,
+	["radar"]=7,
+	["gold statue"]=8,
+}
+
+locs = {
+	["tuna"]=			{9, 2^0},
+	["cod"]=			{9, 2^1},
+	["pollock"]=			{9, 2^2},
+	["mackerel"]=			{9, 2^3},
+	["flounder"]=			{9, 2^4},
+	["mahi"]=			{9, 2^5},
+	["halibut"]=			{9, 2^6},
+	["snapper"]=			{9, 2^7},
+	["grouper"]=			{10, 2^0},
+	["marlin"]=			{10, 2^1},
+	["pufferfish"]=			{10, 2^2},
+	["spikefin"]=			{10, 2^3},
+	["barracuda"]=			{10, 2^4},
+	["shark"]=			{10, 2^5},
+	["spacefish"]=			{10, 2^6},
+	["skyfish"]=			{10, 2^7},
+	["cloudswim"]=			{11, 2^0},
+	["victory"]=			{11, 2^1},
+}
+
+
+function check_prog_loc(id)
+	local gpio_adr = 0x5f80 + progressive_locs[id]
+	cur = peek(gpio_adr)
+	poke(gpio_adr, cur+1)
+end
+
+function check_location(id)
+	local gpio_adr = 0x5f80 + locs[id][1]
+	bank = peek(gpio_adr)
+	bank = bank | locs[id][2]
+	poke(gpio_adr, bank)
+end
+
+function update_items()
+	local gpio_adr = 0x5f80
+	
+	p.max_prs = 1 + peek(gpio_adr+12)
+	p.moxy = 100 * (2^peek(gpio_adr+13))
+	
+	local backpack = peek(gpio_adr+14)
+	if backpack >= 7 then
+		p.inv_s=9999
+	else
+		p.inv_s=10+(10*backpack)
+	end
+	
+	p.swimspeed = peek(gpio_adr+15)
+	p.pr = 10 + (peek(gpio_adr+16)*2)
+	
+	local rlvl = peek(gpio_adr+17)
+	r.s = 5+rlvl
+	if m.cm==3 then
+		menus[m.cm][2].disabled=rlvl<1
+		menus[m.cm][3].disabled=rlvl<2
+		menus[m.cm][4].disabled=rlvl<3
+	end
+	
+	local radlvl = peek(gpio_adr+19)
+	gd.mf=10+radlvl
+	r.b["radar"] = radlvl
+	
+	local jetlvl = peek(gpio_adr+18)
+	
+	if jetlvl > 0 then
+		p.jmpow = 100*(2^(jetlvl-1))
+		r.b["jetpack"]=jetlvl
+	end
+	
+	if peek(gpio_adr+20)>0 then
+		r.b["statue"]=1
+	end
+	
+	if peek(gpio_adr+21)>moneyindex then
+		gd.money += 50
+		moneyindex += 1
+	end
+end
 __gfx__
 00000000005555000000000000111000cccccccccd00000000222200000000000000000000000000000000000000000000000000000000000000000000000000
 0000000005aaaa500000000001111500ccccccccccd0000000288200000000000000000000000000000000000000000000000000000700000000000000000000
@@ -1790,12 +1863,12 @@ d1111111111111111111111d00000000000000000011111111111111001111000002000000088000
 0000000001bbbb100900009040000004449444440011110002111110955944041ccddcc115566551144141003000000301333310000000000000000000000000
 00000000001331000999999044444044044444400050050000011100099444401cdccdc101555510400404003303303300111100000000000000000000000000
 0000000000ccc0000008800000dddd00025225200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000c111c00008888000d0dd0d0285885820000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000c11711c000888800d0c00c0d288888820000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000d11111d000088000ddd00ddd577777750000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000d11711d00000000010dddd01571171750000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000d171d000088880010c00c01571171750000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000ddd0000888888001011010577777750000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000c111c00008888000d0dd0d0285885820008800000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000c11711c000888800d0c00c0d288888820ff88bb000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000d11111d000088000ddd00ddd577777750ff00bb000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000d11711d00000000010dddd01571171750dd00ee000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000d171d000088880010c00c01571171750dd99ee000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000ddd0000888888001011010577777750009900000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000888888000111100055555500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00555000000000000055000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0d666d000000000005aa555555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
