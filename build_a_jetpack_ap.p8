@@ -54,6 +54,14 @@ function _init()
 	music(musics.surface)
 	
 	u_balloon()
+	
+	menuitem(1, "no pickups: off",
+  function()
+    nopickups = not nopickups
+    menuitem(nil, "no pickups: "..(nopickups and "on" or "off"))
+    return true -- don't close
+  end
+	)
 end
 
 
@@ -103,7 +111,7 @@ function _draw()
 			col=7
 		end
 		to("press ❎ to start",32,80,col)
-		print("0.1.0",2,2,0)
+		print("0.1.0B",2,2,0)
 		print("1/100 aymeri100.fr",32,120,0)
 		return
 	end
@@ -134,9 +142,6 @@ function _update60()
 		return
 	end
 	update_items()
-	if btnp(🅾️) and not p.of and not gd.ending do
-		gd.paused = not gd.paused
-	end
 	if gd.paused do
 		return
 	end
@@ -272,12 +277,13 @@ function i_player()
 		moxy=100,
 		max_prs=1, -- max pression
 		pr=10,     -- pickup radius
-		swimspeed=0
+		swimspeed=0,
+		nobreath=false
 	}
 end
 
 function low_oxy()
-	return (olps()*60*8 > p.oxy) and p.iw and p.cm
+	return (olps()*60*8 > p.oxy) and p.iw and p.cm and not p.nobreath
 end
 
 -- reset
@@ -318,7 +324,7 @@ end
 local upp=false
 
 function j_on()
-	return btn(⬆️) and p.cm and not p.iw and p.jpow>0
+	return (btn(⬆️) or btn(❎)) and p.cm and not p.iw and p.jpow>0
 end
 
 function u_player()
@@ -350,18 +356,18 @@ function u_player()
 			end
 			sfx(sfxs.jetpack)
 	end
-	if not btn(⬆️) and upp do
+	if not (btn(⬆️) or btn(❎)) and upp do
 		upp = false
 		p.vy=0
 	end
 	if p.of do
 		p.jpow=min(p.jpow+p.jmpow*0.01,p.jmpow)
 		p.vy=0
-		if btnp(⬆️) and p.cm do
+		if (btnp(⬆️) or btnp(❎)) and p.cm do
 				p.vy=-2
 		end
 	elseif p.iw do
-		if btnp(⬆️) do
+		if (btnp(⬆️) or btnp(❎)) do
 				add_jumpc(p_center())
 				p.vy=-1.8-(p.swimspeed*0.2)
 				sfx(sfxs.swim)
@@ -400,7 +406,7 @@ function u_player()
 	end
 	
 	----------------
-	if p.iw do
+	if p.iw and not p.nobreath do
 		p.oxy-=olps()
 	else
 		local noxy=min(p.oxy+p.moxy/200,p.moxy)
@@ -812,7 +818,11 @@ function d_player_info()
 		local txt=""
 		local bspr=151
 		if p.iw or p.jmpow==0 do
-			txt=tostr(max(flr(p.oxy),0))
+			if p.nobreath then
+				txt="inf"
+			else
+				txt=tostr(max(flr(p.oxy),0))
+			end
 		else
 			bspr=153
 			txt=tostr(max(flr(p.jpow),0))
@@ -1681,6 +1691,7 @@ end
 -- archipelago
 
 moneyindex = 0
+nopickups = false
 
 progressive_locs = {
 	["diving suit"]=0,
@@ -1733,7 +1744,14 @@ function update_items()
 	local gpio_adr = 0x5f80
 	
 	p.max_prs = 1 + peek(gpio_adr+12)
-	p.moxy = 100 * (2^peek(gpio_adr+13))
+	
+	local o2mask = peek(gpio_adr+13)
+	if o2mask > 8 then
+		p.moxy = 25600
+		p.nobreath = true
+	else
+		p.moxy = 100 * (2^o2mask)
+	end
 	
 	local backpack = peek(gpio_adr+14)
 	if backpack >= 7 then
@@ -1743,7 +1761,11 @@ function update_items()
 	end
 	
 	p.swimspeed = peek(gpio_adr+15)
-	p.pr = 10 + (peek(gpio_adr+16)*2)
+	if nopickups then
+		p.pr = 0
+	else
+		p.pr = 10 + (peek(gpio_adr+16)*2)
+	end
 	
 	local rlvl = peek(gpio_adr+17)
 	r.s = 5+rlvl
@@ -1760,6 +1782,7 @@ function update_items()
 	local jetlvl = peek(gpio_adr+18)
 	
 	if jetlvl > 0 then
+		jetlvl = min(jetlvl, 8)
 		p.jmpow = 100*(2^(jetlvl-1))
 		r.b["jetpack"]=jetlvl
 	end
