@@ -1,5 +1,7 @@
 ![Banner](banner.png)
 
+# Build a Jetpack - Archipelago Implementation
+
 Source game from Aymeri: Build a Jetpack - https://www.lexaloffle.com/bbs/?pid=155669
 
 License inhereted from Build a Jetpack - https://creativecommons.org/licenses/by-nc-sa/4.0/
