@@ -38,5 +38,5 @@ class BuildJetpackWorld(World):
 
     def fill_slot_data(self) -> dict[str, Any]:
         return {
-            "options": self.options.as_dict("fishsanity"),
+            "options": self.options.as_dict("death_link", "fishsanity", "harsh_pressure"),
         }

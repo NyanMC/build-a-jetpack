@@ -111,7 +111,7 @@ function _draw()
 			col=7
 		end
 		to("press ❎ to start",32,80,col)
-		print("0.1.0B",2,2,0)
+		print("0.2.0",2,2,0)
 		print("1/100 aymeri100.fr",32,120,0)
 		return
 	end
@@ -142,6 +142,8 @@ function _update60()
 		return
 	end
 	update_items()
+	check_settings()
+	check_deathlink()
 	if gd.paused do
 		return
 	end
@@ -222,6 +224,15 @@ function _level_changed()
 		u_balloon()
 	end
 	if p.dead do
+		if deathlink then
+		-- don't deathlink if
+		-- that's how we died
+			if deathlinked then
+				deathlinked = false
+			else
+		 	poke(0x5f80+42,1)
+			end
+		end
 		music(-1)
 		sfx(sfxs.gameover)
 		gd.lvl=0
@@ -430,7 +441,7 @@ function olps()
 		elseif gd.lvl<p.max_prs do
 			return lvl_v*0.5
 		else
-			return lvl_v*3.0
+			return lvl_v* (harsh_prs and 9.0 or 3.0)
 		end
 	end
 	return 0
@@ -929,7 +940,8 @@ function d_ui()
 		d_warning("low oxygen: rise to surface",80)
 	end
 	if gd.lvl>p.max_prs do
-		d_warning("caution: high pressure zone",96)
+		local word = harsh_prs and "danger" or "caution"
+		d_warning(word..": high pressure zone",96)
 
 	end
 	
@@ -1692,6 +1704,9 @@ end
 
 moneyindex = 0
 nopickups = false
+deathlink = false
+harsh_prs = false
+deathlinked = false
 
 progressive_locs = {
 	["diving suit"]=0,
@@ -1738,6 +1753,27 @@ function check_location(id)
 	bank = peek(gpio_adr)
 	bank = bank | locs[id][2]
 	poke(gpio_adr, bank)
+end
+
+function check_settings()
+	local gpio_adr = 0x5f80+40
+	local settings = peek(gpio_adr)
+	if (settings & 2^0) != 0 then
+		deathlink = true
+	end
+	if (settings & 2^1) != 0 then
+		harsh_prs = true
+	end
+end
+
+function check_deathlink()
+	if (not deathlink) return
+	local gpio_adr = 0x5f80+41
+	if peek(gpio_adr) > 0 then
+		poke(gpio_adr,0)
+		p.dead = true
+		deathlinked = true
+	end
 end
 
 function update_items()

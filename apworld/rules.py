@@ -40,17 +40,18 @@ def set_all_location_rules(world: BuildJetpackWorld) -> None:
     set_shop_tier_rules(7, can_buy_l7_upgrades, world)
     set_shop_tier_rules(8, can_buy_l8_upgrades, world)
 
-    for i in range(3):
-        world.set_rule(world.get_location("Raft Expansion "+str(i+1)), Has("Rock"))
-    world.set_rule(world.get_location("Jetpack 1"), Has("Rock") & Has("Raft Expansion", count=1))
-    world.set_rule(world.get_location("Jetpack 2"), Has("Rock") & Has("Raft Expansion", count=1))
-    world.set_rule(world.get_location("Jetpack 3"), Has("Gold") & Has("Raft Expansion", count=1))
+    world.set_rule(world.get_location("Raft Expansion 1"), Has("Rock"))
+    world.set_rule(world.get_location("Raft Expansion 2"), Has("Rock"))
+    world.set_rule(world.get_location("Raft Expansion 3"), Has("More Rock"))
+    world.set_rule(world.get_location("Jetpack 1"), Has("More Rock") & Has("Raft Expansion", count=1))
+    world.set_rule(world.get_location("Jetpack 2"), Has("More Rock") & Has("Raft Expansion", count=1))
+    world.set_rule(world.get_location("Jetpack 3"), Has("More Gold") & Has("Raft Expansion", count=1))
     world.set_rule(world.get_location("Radar 1"), Has("Strings") & Has("Raft Expansion", count=2))
     world.set_rule(world.get_location("Radar 2"), Has("Strings") & Has("Raft Expansion", count=2))
     world.set_rule(world.get_location("Radar 3"), Has("Rock") & Has("Raft Expansion", count=2))
     world.set_rule(world.get_location("Radar 4"), Has("Gold") & Has("Raft Expansion", count=2))
     world.set_rule(world.get_location("Radar 5"), Has("Gold") & Has("Raft Expansion", count=2))
-    world.set_rule(world.get_location("Gold Statue"), Has("Gold") & Has("Raft Expansion", count=3))
+    world.set_rule(world.get_location("Gold Statue"), Has("More Gold") & Has("Raft Expansion", count=3))
 
 
 def set_completion_condition(world: BuildJetpackWorld) -> None:

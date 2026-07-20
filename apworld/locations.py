@@ -128,7 +128,9 @@ def create_events(world: BuildJetpackWorld) -> None:
     sky3 = world.get_region("Sky 3")
     sea2 = world.get_region("Sea 2")
     sea3 = world.get_region("Sea 3")
+    sea5 = world.get_region("Sea 5")
     sea6 = world.get_region("Sea 6")
+    sea8 = world.get_region("Sea 8")
 
     # technically wood also exists as a sea 1 item, but sea 1 is sphere 1 so i feel no need to make an event for that
 
@@ -140,8 +142,16 @@ def create_events(world: BuildJetpackWorld) -> None:
         "Obtain Rock", "Rock", location_type=BuildJetpackLocation, item_type=BuildJetpackItem
     )
     
+    sea5.add_event(
+        "Obtain More Rock", "More Rock", location_type=BuildJetpackLocation, item_type=BuildJetpackItem
+    )
+    
     sea6.add_event(
         "Obtain Gold", "Gold", location_type=BuildJetpackLocation, item_type=BuildJetpackItem
+    )
+    
+    sea8.add_event(
+        "Obtain More Gold", "More Gold", location_type=BuildJetpackLocation, item_type=BuildJetpackItem
     )
     
     sky3.add_event(
