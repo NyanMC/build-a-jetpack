@@ -62,6 +62,21 @@ function _init()
     return true -- don't close
   end
 	)
+
+	menuitem(2, "music: vanilla",
+  function(b)
+	if b&1>0 then
+		music_rando_type -= 1
+	elseif b&2>0 then
+		music_rando_type += 1
+	end
+	music_rando_type = music_rando_type % 4
+	local rando_names = {"vanilla", "silent", "rndsimple", "rndchaos"}
+	cm = -1
+    menuitem(nil, "music: "..rando_names[music_rando_type+1])
+    return true -- don't close
+  end
+	)
 end
 
 
@@ -103,15 +118,16 @@ function _draw()
 	
 	
 	if not gd.started do
-		ta("build a",48,12,7)
-		ta("jetpack",48,22,9)
+		ta("build a",48,10,7)
+		ta("jetpack",48,20,9)
+		tarch(40,30)
 		
 		local col=11
 		if flr(time()*6)%2 == 1 do
 			col=7
 		end
 		to("press ❎ to start",32,80,col)
-		print("0.3.0",2,2,0)
+		print("0.3.0B",2,2,0)
 		print("1/100 aymeri100.fr",32,120,0)
 		return
 	end
@@ -188,11 +204,34 @@ function _update60()
 	if (allhostile>0) allhostile -= 1
 end
 
+-- includes the unused music
+-- because it sounds like water music
+water_music_ids = {0, 8, 12, 24, 35}
 
-local cm=-1
+function is_water_music(id)
+	for v in all(water_music_ids) do
+		if (v == id) return true;
+	end
+	return false;
+end
+
+function hook_set_music_call(id)
+	if music_rando_type == 1 then -- silent (do not play music)
+		music(-1)
+	elseif music_rando_type == 2 and is_water_music(id) then -- simple (only shuffle water music)
+		music(water_music_ids[flr(rnd((#water_music_ids)+1))])
+	elseif music_rando_type == 3 then -- chaos
+		local valid_ids = {0, 8, 12, 15, 16, 24, 34, 35, 48, 56, 57}
+		music(valid_ids[flr(rnd((#valid_ids)+1))])
+	else
+		music(id)
+	end
+end
+
+cm=-1
 function set_music(id)
 	if cm ~= id do
-		music(id)
+		hook_set_music_call(id)
 	end
 	cm=id
 end
@@ -985,10 +1024,10 @@ function u_ui()
 		m.open=not m.open
 		p.cm=not p.cm
 		if m.open do
-			music(musics.shop)
+			hook_set_music_call(musics.shop)
 			set_menu(1)
 		else
-			music(musics.surface)
+			hook_set_music_call(musics.surface)
 		end
 	end
 	
@@ -1705,6 +1744,19 @@ function ta(txt,x,y,c)
 	end
 end
 
+-- same as ta but prints specifically "archipelago" with matching colors
+function tarch(x,y)
+	local i=0
+	local txt = "archipelago"
+	local colors = {8,8,10,10,11,11,13,13,14,14,9}
+
+	for ch=1,#txt do
+		local ty=y+flr(cos(time()+ch*0.125)*1)
+		to(txt[ch],x+i*4,ty,colors[ch])
+		i+=1
+	end
+end
+
 -- get key
 function gk(obj,key,def)
 	if obj==nil or obj[key]==nil do
@@ -1726,6 +1778,7 @@ htrapindex = 0
 nopickups = false
 deathlink = false
 deathlinked = false
+music_rando_type = 0
 
 -- archipelago features
 harsh_prs = false
