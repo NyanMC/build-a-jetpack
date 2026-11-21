@@ -127,7 +127,7 @@ function _draw()
 			col=7
 		end
 		to("press ❎ to start",32,80,col)
-		print("0.3.0B",2,2,0)
+		print("0.3.0C",2,2,0)
 		print("1/100 aymeri100.fr",32,120,0)
 		return
 	end
@@ -1279,7 +1279,7 @@ end
 -->8
 -- menu
 
-local menus={
+menus={
 	{
 		{
 name="sell",
@@ -1616,7 +1616,7 @@ function _mbtn_p()
 			end
 			if gd.money>=price do
 				gd.money-=price
-				mbtn.lvl+=1
+				--mbtn.lvl+=1
 				if btnmax(mbtn) do
 					mbtn.price=-1
 				else
@@ -1855,7 +1855,31 @@ function check_deathlink()
 	end
 end
 
+function update_menu()
+	local gpio_adr = 0x5f80
+	for i,v in pairs(progressive_locs) do
+		local cbtn
+		local mat = false
+		if v<5 then
+			cbtn = menus[2][v+1]
+		else
+			mat = true
+			cbtn = menus[3][v-4]
+		end
+		
+		cbtn.lvl = peek(gpio_adr+v)
+		if not mat then
+			if btnmax(cbtn) do
+				cbtn.price=-1
+			else
+				cbtn.price=flr(cbtn.base_price*2.2^(cbtn.lvl))
+			end
+		end
+	end
+end
+
 function update_items()
+	update_menu()
 	local gpio_adr = 0x5f80
 	
 	p.max_prs = 1 + peek(gpio_adr+12)
@@ -1909,7 +1933,7 @@ function update_items()
 	end
 	
 	if peek(gpio_adr+21)>moneyindex then
-		gd.money += 50
+		gd.money += 10
 		moneyindex += 1
 	end
 	
