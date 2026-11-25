@@ -43,7 +43,7 @@ class BuildJetpackWorld(World):
 
     def fill_slot_data(self) -> dict[str, Any]:
         return {
-            "options": self.options.as_dict("death_link", "fishsanity", "harsh_pressure", "extra_upgrades", "trap_chance"),
+            "options": self.options.as_dict("death_link", "fishsanity", "harsh_pressure", "nerf_sky_fish", "extra_upgrades", "trap_chance", "gold_statue"),
         }
     
     def generate_early(self) -> None:

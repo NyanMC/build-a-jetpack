@@ -127,7 +127,7 @@ function _draw()
 			col=7
 		end
 		to("press ❎ to start",32,80,col)
-		print("0.3.0C",2,2,0)
+		print("0.3.1",2,2,0)
 		print("1/100 aymeri100.fr",32,120,0)
 		return
 	end
@@ -144,7 +144,7 @@ function _draw()
 end
 
 function _last_lvl()
-	return gd.lvl==-8
+	return gd.lvl==-8 and star_unlocked()
 end
 
 
@@ -544,7 +544,7 @@ end
 -->8
 -- objects
 
-local o_data={
+o_data={
 -- name
        	      -- spr id
 	               -- spr size
@@ -1155,6 +1155,7 @@ function d_balloon()
 	b.y+=cos(time())*0.12
 	spr(36,b.x-8,b.y,2,2)
 	local txt=(8+gd.lvl).."km to go"
+	if (gd.lvl==-8 and not star_unlocked()) txt = "no statue"
 	rectfill(
 		b.x-#txt*2-2,
 		b.y+16,
@@ -1782,6 +1783,8 @@ music_rando_type = 0
 
 -- archipelago features
 harsh_prs = false
+need_statue = false
+fish_already_nerfed = false
 fastdive = 0
 allhostile = 0
 hos_defense = 0
@@ -1820,7 +1823,6 @@ locs = {
 	["victory"]=			{11, 2^1},
 }
 
-
 function check_prog_loc(id)
 	local gpio_adr = 0x5f80 + progressive_locs[id]
 	cur = peek(gpio_adr)
@@ -1843,6 +1845,24 @@ function check_settings()
 	if (settings & 2^1) != 0 then
 		harsh_prs = true
 	end
+	if (settings & 2^2) != 0 then
+		need_statue = true
+	end
+	if (settings & 2^3) != 0 then
+		nerf_sky_fish()
+	end
+end
+
+function star_unlocked()
+	return r.b["statue"]>0 or not need_statue
+end
+
+function nerf_sky_fish()
+	if (fish_already_nerfed) return
+	o_data[19][5] = 20 -- spacefish 60➡️20
+	o_data[20][5] = 15 -- skyfish   40➡️15
+	o_data[21][5] = 10 -- cloudswim 15➡️10
+	fish_already_nerfed = true
 end
 
 function check_deathlink()

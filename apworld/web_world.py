@@ -1,6 +1,8 @@
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld
 
+from .options import option_groups, option_presets
+
 class BuildJetpackWebWorld(WebWorld):
     game = "Build a Jetpack"
     theme = "ocean"
@@ -13,3 +15,6 @@ class BuildJetpackWebWorld(WebWorld):
         ["ChromaNyan"],
     )
     tutorials = [setup_en]
+
+    option_groups = option_groups
+    options_presets = option_presets

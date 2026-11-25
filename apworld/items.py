@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from BaseClasses import Item, ItemClassification
+from BaseClasses import Item, ItemClassification, Location
 
 if TYPE_CHECKING:
     from .world import BuildJetpackWorld
@@ -33,7 +33,7 @@ DEFAULT_ITEM_CLASSIFICATIONS = {
     "Raft Expansion": ItemClassification.progression,
     "Jetpack": ItemClassification.progression | ItemClassification.useful,
     "Radar": ItemClassification.useful,
-    "Gold Statue": ItemClassification.filler,
+    "Gold Statue": ItemClassification.progression_skip_balancing,
     "Money": ItemClassification.filler,
     "Hostile Trap": ItemClassification.trap,
     "Rapid Dive": ItemClassification.useful,
@@ -52,6 +52,9 @@ def get_random_filler_item_name(world: BuildJetpackWorld) -> str:
 def create_item_with_correct_classification(world: BuildJetpackWorld, name: str) -> BuildJetpackItem:
     classification = DEFAULT_ITEM_CLASSIFICATIONS[name]
 
+    if name == "Gold Statue" and world.options.gold_statue.value == 0:
+        classification = ItemClassification.filler
+
     return BuildJetpackItem(name, classification, ITEM_NAME_TO_ID[name], world.player)
 
 def create_all_items(world: BuildJetpackWorld) -> None:
@@ -63,8 +66,7 @@ def create_all_items(world: BuildJetpackWorld) -> None:
         "Magnet": 8,
         "Raft Expansion": 3,
         "Jetpack": 3,
-        "Radar": 5,
-        "Gold Statue": 1
+        "Radar": 5
     }
 
     if world.options.extra_upgrades:
@@ -73,6 +75,14 @@ def create_all_items(world: BuildJetpackWorld) -> None:
             "Shield": 3,
             "Insurance": 5
         })
+
+    if world.options.gold_statue.value < 2:
+        upgrades.update({
+            "Gold Statue": 1
+        })
+    else:
+        gold_statue_loc: Location = world.get_location("Gold Statue")
+        gold_statue_loc.place_locked_item(world.create_item("Gold Statue"))
 
     itempool: list[Item] = []
 

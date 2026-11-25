@@ -128,6 +128,7 @@ def create_events(world: BuildJetpackWorld) -> None:
     sky3 = world.get_region("Sky 3")
     sea2 = world.get_region("Sea 2")
     sea3 = world.get_region("Sea 3")
+    sea4 = world.get_region("Sea 4")
     sea5 = world.get_region("Sea 5")
     sea6 = world.get_region("Sea 6")
     sea8 = world.get_region("Sea 8")
@@ -140,6 +141,10 @@ def create_events(world: BuildJetpackWorld) -> None:
     
     sea3.add_event(
         "Obtain Rock", "Rock", location_type=BuildJetpackLocation, item_type=BuildJetpackItem
+    )
+
+    sea4.add_event(
+        "Obtain More Strings", "More Strings", location_type=BuildJetpackLocation, item_type=BuildJetpackItem
     )
     
     sea5.add_event(

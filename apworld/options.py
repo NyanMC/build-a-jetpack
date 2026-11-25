@@ -11,10 +11,19 @@ class Fishsanity(Toggle):
 
 class HarshPressure(Toggle):
     """
-    Makes high pressure zones drain oxygen far more rapidly, making diving suits more important.
+    Triples the oxygen penalty for diving deeper than your Diving Suit level allows for.
+    Does not affect logic, as entering high pressure zones is never in logic.
     """
 
     display_name = "Harsh Pressure"
+
+class NerfSkyFish(Toggle):
+    """
+    Reduces the sell price of Cloudswim, Skyfish, and Spacefish, making Jetpacks less overpowered.
+    Logic is adjusted to account for this change.
+    """
+
+    display_name = "Nerf Sky Fish"
 
 class ExtraUpgrades(Toggle):
     """
@@ -41,10 +50,69 @@ class TrapChance(Range):
     range_end = 100
     default = 0
 
+class GoldStatue(Choice):
+    """
+    How the Gold Statue item should be handled.
+    Filler: The Gold Statue doesn't do anything.
+    Item Requirement: The Gold Statue item is required to make the ending star spawn.
+    Location Requirement: Same as Item Requirement, but the Gold Statue is also placed on its own location.
+    """
+
+    display_name = "Gold Statue Behaviour"
+
+    option_filler = 0
+    option_item_requirement = 1
+    option_location_requirement = 2
+
+    default = option_filler
+
 @dataclass
 class BuildJetpackOptions(PerGameCommonOptions):
     death_link: DeathLink
     fishsanity: Fishsanity
     harsh_pressure: HarshPressure
+    nerf_sky_fish: NerfSkyFish
     extra_upgrades: ExtraUpgrades
     trap_chance: TrapChance
+    gold_statue: GoldStatue
+
+option_groups = [
+    OptionGroup(
+        "Items and Locations",
+        [Fishsanity, ExtraUpgrades, TrapChance, GoldStatue]
+    ),
+    OptionGroup(
+        "Game Tweaks",
+        [HarshPressure, NerfSkyFish]
+    )
+]
+
+option_presets = {
+    "Painful": {
+        "death_link": True,
+        "fishsanity": False,
+        "harsh_pressure": True,
+        "nerf_sky_fish": True,
+        "extra_upgrades": False,
+        "trap_chance": TrapChance.range_end,
+        "gold_statue": GoldStatue.option_location_requirement
+    },
+    "Developers' Preference": {
+        "death_link": False,
+        "fishsanity": True,
+        "harsh_pressure": True,
+        "nerf_sky_fish": True,
+        "extra_upgrades": True,
+        "trap_chance": 50,
+        "gold_statue": GoldStatue.option_location_requirement
+    },
+    "Surprise Me": {
+        "death_link": "random",
+        "fishsanity": "random",
+        "harsh_pressure": "random",
+        "nerf_sky_fish": "random",
+        "extra_upgrades": "random",
+        "trap_chance": "random",
+        "gold_statue": "random"
+    }
+}
